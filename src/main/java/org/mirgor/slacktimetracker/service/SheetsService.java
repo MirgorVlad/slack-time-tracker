@@ -1,13 +1,16 @@
 package org.mirgor.slacktimetracker.service;
 
-import com.google.api.client.auth.oauth2.Credential;
 import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
 import com.google.api.client.json.jackson2.JacksonFactory;
 import com.google.api.services.sheets.v4.Sheets;
 import com.google.api.services.sheets.v4.model.Spreadsheet;
 import com.google.api.services.sheets.v4.model.ValueRange;
+import com.google.auth.http.HttpCredentialsAdapter;
+import com.google.auth.oauth2.GoogleCredentials;
 import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
+import org.mirgor.slacktimetracker.service.dto.Headers;
+import org.mirgor.slacktimetracker.service.dto.TimeInfo;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
@@ -25,10 +28,10 @@ public class SheetsService {
 
     @PostConstruct
     void init() throws GeneralSecurityException, IOException {
-        Credential credential = GoogleAuthorizeUtil.getCredentials();
+        GoogleCredentials credential = GoogleAuthorizeUtil.getCredentials();
         sheetsService = new Sheets.Builder(
                 GoogleNetHttpTransport.newTrustedTransport(),
-                JacksonFactory.getDefaultInstance(), credential)
+                JacksonFactory.getDefaultInstance(), new HttpCredentialsAdapter(credential))
                 .setApplicationName(APPLICATION_NAME)
                 .build();
 

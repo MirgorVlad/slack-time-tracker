@@ -1,4 +1,4 @@
-package org.mirgor.slacktimetracker.service;
+package org.mirgor.slacktimetracker.service.dto;
 
 public record TimeInfo(
         String project,

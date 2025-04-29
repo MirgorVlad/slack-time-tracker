@@ -2,7 +2,7 @@ HELP.md
 tokens/
 target/
 security/
-src/main/resources/credentials.json
+src/main/resources/crack-mix-425415-r2-0e1afc85995b.json
 !.mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/
 !**/src/test/**/target/
