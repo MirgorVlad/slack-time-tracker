@@ -6,7 +6,7 @@ src/main/resources/crack-mix-425415-r2-0e1afc85995b.json
 !.mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/
 !**/src/test/**/target/
-
+myenv.env
 ### STS ###
 .apt_generated
 .classpath
@@ -21,7 +21,6 @@ src/main/resources/crack-mix-425415-r2-0e1afc85995b.json
 *.iws
 *.iml
 *.ipr
-
 ### NetBeans ###
 /nbproject/private/
 /nbbuild/

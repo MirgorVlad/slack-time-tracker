@@ -14,6 +14,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
+import java.util.TimeZone;
 
 @Slf4j
 @Service
@@ -30,6 +31,8 @@ public class SlackService {
 
     @PostConstruct
     void init() {
+        log.info("Slack service initialized");
+        log.info("Current timezone: {}", TimeZone.getDefault().getID());
         slack = Slack.getInstance();
     }
 

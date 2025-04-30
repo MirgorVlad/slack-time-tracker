@@ -33,13 +33,15 @@ public class TimeTrackerService {
     private final SlackService slackService;
 
 
-    @Scheduled(cron = "0 0 16 * * ?")
+    @Scheduled(cron = "0 00 13 * * ?")
     public void sendTrackerMsg() {
+        log.info("Sending tracker msg");
         slackService.sendMessage(":wave: Time to track development time");
     }
 
-    @Scheduled(cron = "0 0 20 * * ?")
+    @Scheduled(cron = "0 00 17 * * ?")
     public void getTime() {
+        log.info("Getting time for development");
         try {
             ConversationsHistoryResponse conversationsHistoryResponse = slackService.readChannel();
             List<TimeInfo> list = conversationsHistoryResponse.getMessages().stream()
@@ -84,7 +86,7 @@ public class TimeTrackerService {
 
     private boolean validateTs(String ts) {
         long epochMilli = (long) Double.parseDouble(ts) * 1000;
-        ZoneId zone = ZoneId.of("Europe/Kyiv");
+        ZoneId zone = ZoneId.systemDefault();
         LocalDate givenDate = Instant.ofEpochMilli(epochMilli)
                 .atZone(zone)
                 .toLocalDate();
