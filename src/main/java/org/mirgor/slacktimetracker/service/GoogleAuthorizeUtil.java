@@ -14,7 +14,7 @@ import java.util.List;
 public class GoogleAuthorizeUtil {
 
     private static final List<String> SCOPES = Collections.singletonList(SheetsScopes.SPREADSHEETS);
-    private static final String SERVICE_ACCOUNT_FILE_PATH = "/crack-mix-425415-r2-0e1afc85995b.json";
+    private static final String SERVICE_ACCOUNT_FILE_PATH = "/slack-time-tracker-458407-afa5038df098.json";
 
 
     public static GoogleCredentials getCredentials() throws IOException {

@@ -33,13 +33,13 @@ public class TimeTrackerService {
     private final SlackService slackService;
 
 
-    @Scheduled(cron = "0 00 13 * * ?")
+    @Scheduled(cron = "0 0 13 * * ?")
     public void sendTrackerMsg() {
         log.info("Sending tracker msg");
         slackService.sendMessage(":wave: Time to track development time");
     }
 
-    @Scheduled(cron = "0 00 17 * * ?")
+    @Scheduled(cron = "0 0 17 * * ?")
     public void getTime() {
         log.info("Getting time for development");
         try {
@@ -79,9 +79,9 @@ public class TimeTrackerService {
         log.info(userName);
         String role = DEVELOPER_MAP.get(userName);
         if (FE.equals(role)) {
-            return new TimeInfo(name, hours, 0., bugfix);
+            return new TimeInfo(name.toLowerCase(), hours, 0., bugfix);
         }
-        return new TimeInfo(name, 0., hours, bugfix);
+        return new TimeInfo(name.toLowerCase(), 0., hours, bugfix);
     }
 
     private boolean validateTs(String ts) {
