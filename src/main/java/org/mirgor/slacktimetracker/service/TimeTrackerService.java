@@ -4,6 +4,7 @@ import com.slack.api.methods.response.conversations.ConversationsHistoryResponse
 import com.slack.api.model.Message;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.NotNull;
 import org.mirgor.slacktimetracker.service.dto.TimeInfo;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -58,7 +59,7 @@ public class TimeTrackerService {
     private List<TimeInfo> buildTimeInfo(Message message) {
         return Arrays.stream(message.getText().split("\n"))
                 .map(text -> {
-                    Pattern PATTERN = Pattern.compile("^([^:]+):([0-9]+(?:\\.[0-9]+)?)h(?::bugfix)?$");
+                    Pattern PATTERN = Pattern.compile("^([^:]+):\\s*([0-9]+(?:\\.[0-9]+)?)h(?::bugfix)?$");
                     Matcher matcher = PATTERN.matcher(text);
                     if (!matcher.matches()) {
                         log.info("Invalid message format {}", text);
@@ -76,12 +77,18 @@ public class TimeTrackerService {
         Double hours = Double.parseDouble(matcher.group(2));
         boolean bugfix = text.endsWith(":bugfix");
         String userName = slackService.getUserName(message.getUser());
-        log.info(userName);
         String role = DEVELOPER_MAP.get(userName);
+        String project = transformName(name);
+
         if (FE.equals(role)) {
-            return new TimeInfo(name.toLowerCase(), hours, 0., bugfix);
+            return new TimeInfo(project, hours, 0., bugfix);
         }
-        return new TimeInfo(name.toLowerCase(), 0., hours, bugfix);
+        return new TimeInfo(project, 0., hours, bugfix);
+    }
+
+    @NotNull
+    private static String transformName(String name) {
+        return name.toLowerCase().trim();
     }
 
     private boolean validateTs(String ts) {

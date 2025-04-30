@@ -73,21 +73,17 @@ public class SheetsService {
 
         for (TimeInfo timeInfo : timeInfoList) {
             int rowIdx = -1;
-            System.out.println("IN " + timeInfo.project());
             for (int i = 1; i < rows.size(); ++i) {
                 List<Object> row = rows.get(i);
                 if (projCol < row.size() && row.get(projCol).toString().equalsIgnoreCase(timeInfo.project())) {
-                    System.out.println("PR: {}" + row.get(projCol));
                     rowIdx = i; // 0-based index, including header row
                     break;
                 }
             }
             if (rowIdx != -1) {
-                System.out.println("UPDATE " + timeInfo.project());
                 updateTime(spreadsheetId, rows, rowIdx, sheetName, timeInfo);
             } else {
-                System.out.println("new" + timeInfo.project());
-                List<Object> newRow = createTime(spreadsheetId, timeInfo.project(), headers, projCol, sheetName, timeInfo);
+                List<Object> newRow = createTime(spreadsheetId, headers, projCol, sheetName, timeInfo);
                 rows.add(newRow);
             }
         }
@@ -105,18 +101,21 @@ public class SheetsService {
 
     }
 
-    private List<Object> createTime(String spreadsheetId, String project, List<Object> headers,
+    private List<Object> createTime(String spreadsheetId, List<Object> headers,
                                     Integer projCol, String sheetName, TimeInfo timeInfo) throws IOException {
+        double total = 0;
         List<Object> newRow = new ArrayList<>(Collections.nCopies(headers.size(), ""));
-        newRow.set(projCol, project);
+        newRow.set(projCol, timeInfo.project());
         for (Headers header : Headers.values()) {
             if (header.equals(Headers.PROJECT)) {
                 continue;
             }
             Integer timeCol = HEADERS.get(header);
             Double value = getValue(header, timeInfo);
+            total += value;
             newRow.set(timeCol, value);
         }
+        newRow.set(HEADERS.size(), total);
         ValueRange appendBody = new ValueRange().setValues(List.of(newRow));
         sheetsService.spreadsheets().values()
                 .append(spreadsheetId, sheetName, appendBody)
@@ -126,9 +125,35 @@ public class SheetsService {
         return newRow;
     }
 
+    private void updateTimeV2(String spreadsheetId, List<Object> headers,
+                            int projCol,
+                            List<List<Object>> rows, int rowIdx, String sheetName, TimeInfo timeInfo) throws IOException {
+        double total = 0;
+        List<Object> newRow = new ArrayList<>(Collections.nCopies(headers.size(), ""));
+        List<Object> row = rows.get(rowIdx);
+        newRow.set(projCol, timeInfo.project());
+        for (Headers header : Headers.values()) {
+            if (header.equals(Headers.PROJECT)) {
+                continue;
+            }
+            Integer timeCol = HEADERS.get(header);
+            Double oldValue = Double.parseDouble(row.get(timeCol).toString());
+            Double newValue = oldValue + getValue(header, timeInfo);
+            total += newValue;
+            newRow.set(timeCol, newValue);
+        }
+        newRow.set(headers.size(), total);
+        ValueRange updateBody = new ValueRange().setValues(List.of(newRow));
+        String cell = String.format("%s!%s%d", sheetName, (char) ('A' + rowIdx), headers.size());
+        sheetsService.spreadsheets().values()
+                .update(spreadsheetId, cell, updateBody)
+                .setValueInputOption("RAW")
+                .execute();
+    }
+
     private void updateTime(String spreadsheetId,
                             List<List<Object>> rows, int rowIdx, String sheetName, TimeInfo timeInfo) throws IOException {
-
+        double total = 0;
         List<Object> row = rows.get(rowIdx);
         for (Headers header : Headers.values()) {
             if (header.equals(Headers.PROJECT)) {
@@ -138,6 +163,7 @@ public class SheetsService {
             Double value = getValue(header, timeInfo);
             double current = Double.parseDouble(row.get(timeCol).toString());
             double newValue = current + value;
+            total += newValue;
             String cell = String.format("%s!%s%d", sheetName, (char) ('A' + timeCol), rowIdx + 1);
             ValueRange updateBody = new ValueRange().setValues(List.of(List.of(newValue)));
             sheetsService.spreadsheets().values()
