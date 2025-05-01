@@ -81,7 +81,7 @@ public class SheetsService {
                 }
             }
             if (rowIdx != -1) {
-                updateTime(spreadsheetId, rows, rowIdx, sheetName, timeInfo);
+                updateTime(spreadsheetId, headers, rows, rowIdx, sheetName, timeInfo);
             } else {
                 List<Object> newRow = createTime(spreadsheetId, headers, projCol, sheetName, timeInfo);
                 rows.add(newRow);
@@ -125,33 +125,9 @@ public class SheetsService {
         return newRow;
     }
 
-    private void updateTimeV2(String spreadsheetId, List<Object> headers,
-                            int projCol,
-                            List<List<Object>> rows, int rowIdx, String sheetName, TimeInfo timeInfo) throws IOException {
-        double total = 0;
-        List<Object> newRow = new ArrayList<>(Collections.nCopies(headers.size(), ""));
-        List<Object> row = rows.get(rowIdx);
-        newRow.set(projCol, timeInfo.project());
-        for (Headers header : Headers.values()) {
-            if (header.equals(Headers.PROJECT)) {
-                continue;
-            }
-            Integer timeCol = HEADERS.get(header);
-            Double oldValue = Double.parseDouble(row.get(timeCol).toString());
-            Double newValue = oldValue + getValue(header, timeInfo);
-            total += newValue;
-            newRow.set(timeCol, newValue);
-        }
-        newRow.set(headers.size(), total);
-        ValueRange updateBody = new ValueRange().setValues(List.of(newRow));
-        String cell = String.format("%s!%s%d", sheetName, (char) ('A' + rowIdx), headers.size());
-        sheetsService.spreadsheets().values()
-                .update(spreadsheetId, cell, updateBody)
-                .setValueInputOption("RAW")
-                .execute();
-    }
 
     private void updateTime(String spreadsheetId,
+                            List<Object> headers,
                             List<List<Object>> rows, int rowIdx, String sheetName, TimeInfo timeInfo) throws IOException {
         double total = 0;
         List<Object> row = rows.get(rowIdx);
@@ -171,6 +147,12 @@ public class SheetsService {
                     .setValueInputOption("RAW")
                     .execute();
         }
+        ValueRange updateTotal = new ValueRange().setValues(List.of(List.of(total)));
+        String cell = String.format("%s!%s%d", sheetName, (char) ('A' + headers.size()-1), rowIdx + 1);
+        sheetsService.spreadsheets().values()
+                .update(spreadsheetId, cell, updateTotal)
+                .setValueInputOption("RAW")
+                .execute();
     }
 
     private static List<Object> getHeaders(ValueRange headersResp) {
