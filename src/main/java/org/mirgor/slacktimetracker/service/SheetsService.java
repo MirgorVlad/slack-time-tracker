@@ -104,7 +104,7 @@ public class SheetsService {
     private List<Object> createTime(String spreadsheetId, List<Object> headers,
                                     Integer projCol, String sheetName, TimeInfo timeInfo) throws IOException {
         double total = 0;
-        List<Object> newRow = new ArrayList<>(Collections.nCopies(headers.size(), ""));
+        List<Object> newRow = new ArrayList<>(Collections.nCopies(headers.size()+1, ""));
         newRow.set(projCol, timeInfo.project());
         for (Headers header : Headers.values()) {
             if (header.equals(Headers.PROJECT)) {
@@ -122,6 +122,7 @@ public class SheetsService {
                 .setValueInputOption("RAW")
                 .setInsertDataOption("INSERT_ROWS")
                 .execute();
+        log.info("Time create {}", timeInfo);
         return newRow;
     }
 
@@ -139,6 +140,7 @@ public class SheetsService {
             Double value = getValue(header, timeInfo);
             double current = Double.parseDouble(row.get(timeCol).toString());
             double newValue = current + value;
+            row.set(timeCol, newValue);
             total += newValue;
             String cell = String.format("%s!%s%d", sheetName, (char) ('A' + timeCol), rowIdx + 1);
             ValueRange updateBody = new ValueRange().setValues(List.of(List.of(newValue)));
@@ -148,11 +150,12 @@ public class SheetsService {
                     .execute();
         }
         ValueRange updateTotal = new ValueRange().setValues(List.of(List.of(total)));
-        String cell = String.format("%s!%s%d", sheetName, (char) ('A' + headers.size()-1), rowIdx + 1);
+        String cell = String.format("%s!%s%d", sheetName, (char) ('A' + headers.size()), rowIdx + 1);
         sheetsService.spreadsheets().values()
                 .update(spreadsheetId, cell, updateTotal)
                 .setValueInputOption("RAW")
                 .execute();
+        log.info("Time update {}", timeInfo);
     }
 
     private static List<Object> getHeaders(ValueRange headersResp) {
