@@ -41,6 +41,8 @@ public class SheetsService {
         HEADERS.put(Headers.BE, 2);
         HEADERS.put(Headers.FE_FIX, 3);
         HEADERS.put(Headers.BE_FIX, 4);
+        HEADERS.put(Headers.TOTAL_DEV, 5);
+        HEADERS.put(Headers.TOTAL_FIX, 6);
     }
 
     public void addTime(String spreadsheetId, List<TimeInfo> timeInfoList) throws IOException {
@@ -96,6 +98,8 @@ public class SheetsService {
             case BE -> bugfix ? 0 : timeInfo.be();
             case FE_FIX -> bugfix ? timeInfo.fe() : 0;
             case BE_FIX -> bugfix ? timeInfo.be() : 0;
+            case TOTAL_DEV -> bugfix ? 0 : timeInfo.be() + timeInfo.fe();
+            case TOTAL_FIX -> bugfix ? timeInfo.be() + timeInfo.fe() : 0;
             default -> 0.;
         };
 
@@ -103,7 +107,6 @@ public class SheetsService {
 
     private List<Object> createTime(String spreadsheetId, List<Object> headers,
                                     Integer projCol, String sheetName, TimeInfo timeInfo) throws IOException {
-        double total = 0;
         List<Object> newRow = new ArrayList<>(Collections.nCopies(headers.size()+1, ""));
         newRow.set(projCol, timeInfo.project());
         for (Headers header : Headers.values()) {
@@ -112,10 +115,8 @@ public class SheetsService {
             }
             Integer timeCol = HEADERS.get(header);
             Double value = getValue(header, timeInfo);
-            total += value;
             newRow.set(timeCol, value);
         }
-        newRow.set(HEADERS.size(), total);
         ValueRange appendBody = new ValueRange().setValues(List.of(newRow));
         sheetsService.spreadsheets().values()
                 .append(spreadsheetId, sheetName, appendBody)
@@ -130,7 +131,6 @@ public class SheetsService {
     private void updateTime(String spreadsheetId,
                             List<Object> headers,
                             List<List<Object>> rows, int rowIdx, String sheetName, TimeInfo timeInfo) throws IOException {
-        double total = 0;
         List<Object> row = rows.get(rowIdx);
         for (Headers header : Headers.values()) {
             if (header.equals(Headers.PROJECT)) {
@@ -141,7 +141,6 @@ public class SheetsService {
             double current = Double.parseDouble(row.get(timeCol).toString());
             double newValue = current + value;
             row.set(timeCol, newValue);
-            total += newValue;
             String cell = String.format("%s!%s%d", sheetName, (char) ('A' + timeCol), rowIdx + 1);
             ValueRange updateBody = new ValueRange().setValues(List.of(List.of(newValue)));
             sheetsService.spreadsheets().values()
@@ -149,12 +148,6 @@ public class SheetsService {
                     .setValueInputOption("RAW")
                     .execute();
         }
-        ValueRange updateTotal = new ValueRange().setValues(List.of(List.of(total)));
-        String cell = String.format("%s!%s%d", sheetName, (char) ('A' + headers.size()), rowIdx + 1);
-        sheetsService.spreadsheets().values()
-                .update(spreadsheetId, cell, updateTotal)
-                .setValueInputOption("RAW")
-                .execute();
         log.info("Time update {}", timeInfo);
     }
 
